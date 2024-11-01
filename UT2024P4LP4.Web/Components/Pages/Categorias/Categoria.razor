@@ -1,0 +1,149 @@
+﻿@rendermode InteractiveServer
+@attribute [StreamRendering]
+@page "/Categoria"
+
+<h3>Categoria</h3>
+
+@if (ShowForm)
+{
+    @* Formularion de accion*@
+    <div class="card">
+        <h5 class="card-header">@Accion producto</h5>
+        <div class="card-body">
+            <div class="mb-3">
+                <label for="nombre" class="form-label">Nombre</label>
+                <input @bind-value="MiCategoria.Nombre" type="text" class="form-control" id="nombre" placeholder="Nombre" disabled="@DisableInputs">
+            </div>
+          
+            @if (Accion != Constants.Acciones.Ver)
+            {
+                <span class="btn btn-primary" @onclick="Aceptar">Aceptar</span>
+            }
+            <span class="btn btn-danger" @onclick="btnCancelarClick">Cancelar</span>
+        </div>
+    </div>
+}
+else
+{
+    @if (CategoriaList != null)
+    {
+        @* Formularion de los registros*@
+        <div class="card mb-3 mt-3">
+            <div class="card-header">
+                <span class="btn btn-success" @onclick="btnAgregarClick">+</span>
+            </div>
+            <div class="card-body">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th scope="col">#</th>
+                            <th scope="col">Nombre</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (CategoriaList.Count > 0)
+                        {
+                            @foreach (var c in CategoriaList)
+                            {
+                                <tr>
+                                    <th scope="row">@c.Id</th>
+                                    <td>@c.Nombre</td>
+                                    <td>
+                                        <div class="btn-group" role="group" aria-label="Basic mixed styles example">
+                                            <span @onclick="()=>btnEditarClick(c)" class="btn btn-outline-warning">Editar</span>
+                                            <span @onclick="()=>btnEliminarClick(c)" class="btn btn-outline-danger">Eliminar</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+    else
+    {
+        <p>Cargando...</p>
+    }
+}
+@code {
+    #region Propiedades del componente Index.Razor
+    public List<ProductoDto> Productos { get; set; } = new();
+    public string Accion { get; set; } = "Registrar";
+    public CategoriaRequest MiCategoria { get; set; } = new();
+
+    public List<CategoriaDto>? CategoriaList { get; set; }
+    bool ShowForm = false, DisableInputs = false;
+    #endregion Propiedades del componente Index.Razor
+
+    #region Metodos del ciclo de vida de la aplicacion (para este componente)
+    protected override async Task OnInitializedAsync()
+    {
+        await Consultar();
+    }
+    #endregion Metodos del ciclo de vida de la aplicacion (para este componente)
+
+    #region Eventos
+    public void btnAgregarClick()
+    {
+        Accion = Constants.Acciones.Registrar;
+        ShowForm = true;
+        StateHasChanged();
+        DisableInputs = false;
+    }
+    public void btnEditarClick(CategoriaDto dto)
+    {
+        Accion = Constants.Acciones.Modificar;
+        ShowForm = true;
+        DisableInputs = false;
+        MiCategoria = dto.ToRequest();
+    }
+    public void btnEliminarClick(CategoriaDto dto)
+    {
+        Accion = Constants.Acciones.Eliminar;
+        ShowForm = true;
+        DisableInputs = true;
+        MiCategoria = dto.ToRequest();
+    }
+
+    public void btnCancelarClick()
+    {
+        Limpiar();
+    }
+    #endregion Eventos
+
+    #region Métodos
+    async Task Consultar()
+    {
+        var result = await serviceC.GetAll();
+        if (result.Succesd)
+        {
+            CategoriaList =
+            result.Data?.ToList()
+            ??
+            new List<CategoriaDto>();
+        }
+    }
+  
+
+    public void Limpiar()
+    {
+        ShowForm = false;
+
+    }
+    public async Task Aceptar()
+    {
+        Result r =
+        Accion == Constants.Acciones.Registrar ? await serviceC.Create(MiCategoria) :
+        Accion == Constants.Acciones.Modificar ? await serviceC.Update(MiCategoria) :
+        Accion == Constants.Acciones.Eliminar ? await serviceC.Delete(MiCategoria.Id) :
+        Result.Failure("Accion no soportada");
+        if (r.Succesd)
+        {
+            await Consultar();
+            Limpiar();
+        }
+    }
+    #endregion Métodos
+}
