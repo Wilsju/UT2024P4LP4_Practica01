@@ -33,7 +33,7 @@ public partial class CategoriaService : ICategoriaService
     {
         try
         {
-            var entity = dbContext.Categorias.Where(p => p.Id == categoria.Id).FirstOrDefault();
+            var entity = dbContext.Categorias.Where(c => c.Id == categoria.Id).FirstOrDefault();
             if (entity == null)
                 return Result.Failure($"La Categoria'{categoria.Id}' no existe!");
             if (entity.Update(categoria.Nombre))
@@ -52,7 +52,7 @@ public partial class CategoriaService : ICategoriaService
     {
         try
         {
-            var entity = dbContext.Categorias.Where(p => p.Id == Id).FirstOrDefault();
+            var entity = dbContext.Categorias.Where(c => c.Id == Id).FirstOrDefault();
             if (entity == null)
                 return Result.Failure($"la Categoria '{Id}' no existe!");
             dbContext.Categorias.Remove(entity);
@@ -69,8 +69,8 @@ public partial class CategoriaService : ICategoriaService
         try
         {
             var entities = await dbContext.Categorias
-                .Where(p => p.Nombre.ToLower().Contains(filtro.ToLower()))
-                .Select(p => new CategoriaDto(p.Id, p.Nombre))
+                .Where(c => c.Nombre.ToLower().Contains(filtro.ToLower()))
+                .Select(c => new CategoriaDto(c.Id, c.Nombre))
                 .ToListAsync();
             return ResultList<CategoriaDto>.Success(entities);
         }
